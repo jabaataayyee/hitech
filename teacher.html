@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hi Tech Academy - Teacher Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap');
         body { font-family: 'Inter', sans-serif; }
@@ -43,7 +42,6 @@
         </div>
     </main>
 
-    <script src="./js/supabase.js"></script>
     <script src="./js/auth.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
@@ -55,22 +53,19 @@
         });
 
         async function fetchContent() {
-            const { data, error } = await window.supabase
-                .from('posts')
-                .select('*')
-                .or('audience.eq.teacher,audience.eq.all')
-                .order('created_at', { ascending: false });
+            try {
+                const response = await fetch('/api/posts');
+                if (!response.ok) throw new Error('Failed to fetch content');
+                const data = await response.json();
 
-            if (error) {
-                alert(error.message);
-                return;
+                const announcements = data.filter(p => p.type === 'text');
+                const materials = data.filter(p => p.type !== 'text');
+
+                renderAnnouncements(announcements);
+                renderMaterials(materials);
+            } catch (err) {
+                alert(err.message);
             }
-
-            const announcements = data.filter(p => p.type === 'text');
-            const materials = data.filter(p => p.type !== 'text');
-
-            renderAnnouncements(announcements);
-            renderMaterials(materials);
         }
 
         function renderAnnouncements(items) {

@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hi Tech Academy - Login</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap');
         body { font-family: 'Inter', sans-serif; }
@@ -44,8 +43,6 @@
         </div>
     </div>
 
-    <script src="./js/supabase.js"></script>
-    <script src="./js/auth.js"></script>
     <script>
         document.getElementById('login-form').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -60,29 +57,19 @@
             errorMsg.classList.add('hidden');
 
             try {
-                // 1. Sign in user
-                const { data, error } = await window.supabase.auth.signInWithPassword({
-                    email,
-                    password,
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password }),
                 });
 
-                if (error) throw error;
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.message || 'Login failed');
 
-                if (data.user) {
-                    // 2. Fetch role from users table
-                    const { data: userData, error: roleError } = await window.supabase
-                        .from('users')
-                        .select('role')
-                        .eq('id', data.user.id)
-                        .single();
-
-                    if (roleError) throw roleError;
-
-                    successMsg.classList.remove('hidden');
-                    setTimeout(() => {
-                        window.location.href = `./${userData.role}.html`;
-                    }, 1000);
-                }
+                successMsg.classList.remove('hidden');
+                setTimeout(() => {
+                    window.location.href = `./${data.user.role}.html`;
+                }, 1000);
             } catch (err) {
                 errorMsg.innerText = err.message;
                 errorMsg.classList.remove('hidden');

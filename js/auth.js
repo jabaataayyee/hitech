@@ -1,33 +1,29 @@
 // Auth Protection and Shared Logic
 async function checkAuth(requiredRole) {
-    const { data: { user } } = await window.supabase.auth.getUser();
+    try {
+        const response = await fetch('/api/auth/me');
+        if (!response.ok) {
+            window.location.href = './login.html';
+            return null;
+        }
 
-    if (!user) {
+        const data = await response.json();
+        const user = data.user;
+
+        if (requiredRole && user.role !== requiredRole) {
+            window.location.href = `./${user.role}.html`;
+            return null;
+        }
+
+        return { user, role: user.role };
+    } catch (err) {
         window.location.href = './login.html';
         return null;
     }
-
-    const { data: userData, error } = await window.supabase
-        .from('users')
-        .select('role')
-        .eq('id', user.id)
-        .single();
-
-    if (error || !userData) {
-        window.location.href = './login.html';
-        return null;
-    }
-
-    if (requiredRole && userData.role !== requiredRole) {
-        window.location.href = `./${userData.role}.html`;
-        return null;
-    }
-
-    return { user, role: userData.role };
 }
 
 async function logout() {
-    await window.supabase.auth.signOut();
+    await fetch('/api/auth/logout', { method: 'POST' });
     window.location.href = './login.html';
 }
 

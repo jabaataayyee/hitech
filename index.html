@@ -6,8 +6,6 @@
     <title>Hi Tech Academy - Home</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Supabase CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <!-- Custom Styles -->
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap');
@@ -69,7 +67,7 @@
                     </a>
                 </div>
                 <!-- 3D Periodic Table Hero Animation -->
-                <div class="relative w-full h-80 mt-12 rounded-[2.5rem] overflow-hidden border border-slate-200 shadow-2xl bg-white/50 backdrop-blur-sm group">
+                <div class="relative w-full h-96 mt-12 rounded-[2.5rem] overflow-hidden border border-slate-200 shadow-2xl bg-white/50 backdrop-blur-sm group">
                     <div id="hero-periodic-canvas" class="w-full h-full touch-none"></div>
                     <div class="absolute top-8 left-8 pointer-events-none">
                         <div class="inline-flex items-center gap-2 px-3 py-1 bg-indigo-600 text-white rounded-full text-[10px] font-black uppercase tracking-widest mb-2">
@@ -77,6 +75,40 @@
                         </div>
                         <p class="text-2xl font-black text-slate-900 tracking-tighter">PERIODIC EXPLORER</p>
                         <p class="text-sm font-bold text-slate-500">Interactive Element Matrix</p>
+                    </div>
+                    <!-- Legend -->
+                    <div class="absolute top-8 right-8 bg-white/80 backdrop-blur-md p-4 rounded-2xl border border-slate-200 hidden md:block">
+                        <p class="text-[10px] font-black text-slate-900 uppercase tracking-widest mb-3">Category Legend</p>
+                        <div class="grid grid-cols-2 gap-x-4 gap-y-2">
+                            <div class="flex items-center gap-2">
+                                <div class="w-2 h-2 rounded-full bg-[#f87171]"></div>
+                                <span class="text-[8px] font-bold text-slate-500 uppercase tracking-wider">Alkali Metals</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <div class="w-2 h-2 rounded-full bg-[#fb923c]"></div>
+                                <span class="text-[8px] font-bold text-slate-500 uppercase tracking-wider">Alkaline Earth</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <div class="w-2 h-2 rounded-full bg-[#facc15]"></div>
+                                <span class="text-[8px] font-bold text-slate-500 uppercase tracking-wider">Transition</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <div class="w-2 h-2 rounded-full bg-[#4ade80]"></div>
+                                <span class="text-[8px] font-bold text-slate-500 uppercase tracking-wider">Post-transition</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <div class="w-2 h-2 rounded-full bg-[#2dd4bf]"></div>
+                                <span class="text-[8px] font-bold text-slate-500 uppercase tracking-wider">Metalloids</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <div class="w-2 h-2 rounded-full bg-[#60a5fa]"></div>
+                                <span class="text-[8px] font-bold text-slate-500 uppercase tracking-wider">Nonmetals</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <div class="w-2 h-2 rounded-full bg-[#a78bfa]"></div>
+                                <span class="text-[8px] font-bold text-slate-500 uppercase tracking-wider">Noble Gases</span>
+                            </div>
+                        </div>
                     </div>
                     <div class="absolute bottom-6 right-8 text-[10px] font-black text-slate-400 uppercase tracking-widest animate-pulse">
                         Rotate to Explore
@@ -293,39 +325,62 @@
             scene.add(particlesMesh);
 
             const group = new THREE.Group();
+            
+            const categories = {
+                alkali: 0xf87171,
+                alkaline: 0xfb923c,
+                transition: 0xfacc15,
+                postTransition: 0x4ade80,
+                metalloid: 0x2dd4bf,
+                nonmetal: 0x60a5fa,
+                noble: 0xa78bfa
+            };
+
             const elements = [
-                { s: 'H', c: 0x6366f1 }, { s: 'He', c: 0xa855f7 }, { s: 'Li', c: 0x6366f1 },
-                { s: 'Be', c: 0xa855f7 }, { s: 'B', c: 0x6366f1 }, { s: 'C', c: 0xa855f7 },
-                { s: 'N', c: 0x6366f1 }, { s: 'O', c: 0xa855f7 }, { s: 'F', c: 0x6366f1 },
-                { s: 'Ne', c: 0xa855f7 }, { s: 'Na', c: 0x6366f1 }, { s: 'Mg', c: 0xa855f7 }
+                { s: 'H', cat: 'nonmetal' }, { s: 'He', cat: 'noble' },
+                { s: 'Li', cat: 'alkali' }, { s: 'Be', cat: 'alkaline' },
+                { s: 'B', cat: 'metalloid' }, { s: 'C', cat: 'nonmetal' },
+                { s: 'N', cat: 'nonmetal' }, { s: 'O', cat: 'nonmetal' },
+                { s: 'F', cat: 'nonmetal' }, { s: 'Ne', cat: 'noble' },
+                { s: 'Na', cat: 'alkali' }, { s: 'Mg', cat: 'alkaline' },
+                { s: 'Al', cat: 'postTransition' }, { s: 'Si', cat: 'metalloid' },
+                { s: 'P', cat: 'nonmetal' }, { s: 'S', cat: 'nonmetal' },
+                { s: 'Cl', cat: 'nonmetal' }, { s: 'Ar', cat: 'noble' },
+                { s: 'K', cat: 'alkali' }, { s: 'Ca', cat: 'alkaline' },
+                { s: 'Sc', cat: 'transition' }, { s: 'Ti', cat: 'transition' },
+                { s: 'V', cat: 'transition' }, { s: 'Cr', cat: 'transition' },
+                { s: 'Mn', cat: 'transition' }, { s: 'Fe', cat: 'transition' },
+                { s: 'Co', cat: 'transition' }, { s: 'Ni', cat: 'transition' },
+                { s: 'Cu', cat: 'transition' }, { s: 'Zn', cat: 'transition' }
             ];
 
             const meshes = [];
 
             elements.forEach((el, i) => {
+                const color = categories[el.cat];
                 const geometry = new THREE.IcosahedronGeometry(0.8, 0);
                 const material = new THREE.MeshPhongMaterial({ 
-                    color: el.c,
+                    color: color,
                     flatShading: true,
                     shininess: 100,
-                    emissive: el.c,
+                    emissive: color,
                     emissiveIntensity: 0.2
                 });
                 const mesh = new THREE.Mesh(geometry, material);
                 
                 const angle = (i / elements.length) * Math.PI * 2;
-                const radius = 4;
+                const radius = 6;
                 mesh.position.x = Math.cos(angle) * radius;
                 mesh.position.z = Math.sin(angle) * radius;
-                mesh.position.y = (Math.random() - 0.5) * 2;
+                mesh.position.y = (Math.random() - 0.5) * 4;
                 
-                mesh.userData = { originalScale: 1, color: el.c };
+                mesh.userData = { originalScale: 1, color: color };
                 group.add(mesh);
                 meshes.push(mesh);
                 
                 // Add glow
                 const glowGeo = new THREE.IcosahedronGeometry(0.9, 0);
-                const glowMat = new THREE.MeshBasicMaterial({ color: el.c, transparent: true, opacity: 0.2 });
+                const glowMat = new THREE.MeshBasicMaterial({ color: color, transparent: true, opacity: 0.2 });
                 mesh.add(new THREE.Mesh(glowGeo, glowMat));
             });
 
@@ -453,7 +508,6 @@
         </div>
     </footer>
 
-    <script src="./js/supabase.js"></script>
     <script>
         // Simple scroll animation
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
