@@ -72,7 +72,14 @@
             try {
                 const response = await fetch('/api/posts');
                 if (!response.ok) throw new Error('Failed to fetch content');
-                const data = await response.json();
+                
+                let data;
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    data = await response.json();
+                } else {
+                    throw new Error('Server returned non-JSON response');
+                }
 
                 const announcements = data.filter(p => p.type === 'text');
                 const books = data.filter(p => p.type === 'pdf');

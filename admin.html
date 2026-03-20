@@ -99,7 +99,14 @@
             try {
                 const response = await fetch('/api/posts');
                 if (!response.ok) throw new Error('Failed to fetch posts');
-                const data = await response.json();
+                
+                let data;
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    data = await response.json();
+                } else {
+                    throw new Error('Server returned non-JSON response');
+                }
 
                 const list = document.getElementById('posts-list');
                 if (data.length === 0) {
@@ -128,7 +135,14 @@
             try {
                 const response = await fetch('/api/users');
                 if (!response.ok) throw new Error('Failed to fetch users');
-                const data = await response.json();
+                
+                let data;
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    data = await response.json();
+                } else {
+                    throw new Error('Server returned non-JSON response');
+                }
 
                 const list = document.getElementById('users-list');
                 list.innerHTML = data.map(user => `

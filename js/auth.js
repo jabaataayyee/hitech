@@ -7,7 +7,14 @@ async function checkAuth(requiredRole) {
             return null;
         }
 
-        const data = await response.json();
+        let data;
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+            data = await response.json();
+        } else {
+            throw new Error('Server returned non-JSON response');
+        }
+
         const user = data.user;
 
         if (requiredRole && user.role !== requiredRole) {

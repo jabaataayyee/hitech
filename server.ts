@@ -26,6 +26,12 @@ async function startServer() {
     app.use(express.json());
     app.use(cookieParser());
 
+    // Request logging
+    app.use((req, res, next) => {
+        console.log(`${req.method} ${req.url}`);
+        next();
+    });
+
     // Middleware to verify token
     const authenticate = (req: any, res: any, next: any) => {
         const token = req.cookies.token;
@@ -103,6 +109,12 @@ async function startServer() {
         if (req.user.role !== 'admin') return res.status(403).json({ message: 'Forbidden' });
         const users = getUsers().map(({ password, ...u }: any) => u);
         res.json(users);
+    });
+
+    // Global Error Handler
+    app.use((err: any, req: any, res: any, next: any) => {
+        console.error('Unhandled Error:', err);
+        res.status(500).json({ message: 'Internal Server Error', error: err.message });
     });
 
     // Vite middleware for development
