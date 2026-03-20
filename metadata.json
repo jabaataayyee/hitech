@@ -1,0 +1,5 @@
+{
+  "name": "Hi Tech Academy Portal",
+  "description": "A full-stack school portal for Hi Tech Academy in Harar, Ethiopia, built with Vanilla JS and Supabase.",
+  "requestFramePermissions": []
+}

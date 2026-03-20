@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hi Tech Academy - Signup</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen flex items-center justify-center p-6">
+    <div class="max-w-md w-full bg-white rounded-[2.5rem] shadow-2xl overflow-hidden border border-slate-100">
+        <div class="p-10">
+            <div class="flex items-center gap-2 text-indigo-600 font-extrabold text-2xl tracking-tighter mb-8 justify-center">
+                <span class="bg-indigo-600 text-white px-2 py-1 rounded-lg">HI</span>
+                <span>TECH</span>
+            </div>
+            <h2 class="text-3xl font-black text-slate-900 tracking-tighter mb-2 text-center">CREATE ACCOUNT</h2>
+            <p class="text-slate-500 font-medium text-center mb-10">Join the Hi Tech Academy community</p>
+
+            <form id="signup-form" class="space-y-6">
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 mb-2 uppercase tracking-widest">Email Address</label>
+                    <input type="email" id="email" required class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all font-medium" placeholder="your@email.com">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 mb-2 uppercase tracking-widest">Password</label>
+                    <input type="password" id="password" required class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all font-medium" placeholder="••••••••">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 mb-2 uppercase tracking-widest">Account Type</label>
+                    <select id="role" required class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all font-medium appearance-none">
+                        <option value="student">Student</option>
+                        <option value="teacher">Teacher</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                </div>
+                <button type="submit" id="submit-btn" class="w-full py-5 bg-indigo-600 text-white rounded-2xl font-black text-lg hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-100">
+                    SIGN UP
+                </button>
+            </form>
+
+            <div id="error-msg" class="mt-6 text-red-500 text-sm font-bold text-center hidden"></div>
+            <div id="success-msg" class="mt-6 text-green-500 text-sm font-bold text-center hidden">Account created! Redirecting...</div>
+
+            <p class="mt-10 text-center text-slate-500 font-medium">
+                Already have an account? <a href="./login.html" class="text-indigo-600 font-bold hover:underline">Login</a>
+            </p>
+        </div>
+    </div>
+
+    <script src="./js/supabase.js"></script>
+    <script src="./js/auth.js"></script>
+    <script>
+        document.getElementById('signup-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const role = document.getElementById('role').value;
+            const submitBtn = document.getElementById('submit-btn');
+            const errorMsg = document.getElementById('error-msg');
+            const successMsg = document.getElementById('success-msg');
+
+            submitBtn.disabled = true;
+            submitBtn.innerText = 'PROCESSING...';
+            errorMsg.classList.add('hidden');
+
+            try {
+                // 1. Sign up user
+                const { data, error } = await window.supabase.auth.signUp({
+                    email,
+                    password,
+                });
+
+                if (error) throw error;
+
+                if (data.user) {
+                    // 2. Store role in users table
+                    const { error: roleError } = await window.supabase
+                        .from('users')
+                        .insert([{ id: data.user.id, email, role }]);
+
+                    if (roleError) throw roleError;
+
+                    successMsg.classList.remove('hidden');
+                    setTimeout(() => {
+                        window.location.href = `./${role}.html`;
+                    }, 2000);
+                }
+            } catch (err) {
+                errorMsg.innerText = err.message;
+                errorMsg.classList.remove('hidden');
+                submitBtn.disabled = false;
+                submitBtn.innerText = 'SIGN UP';
+            }
+        });
+    </script>
+</body>
+</html>

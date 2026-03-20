@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hi Tech Academy - Teacher Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen">
+    <!-- Sidebar / Nav -->
+    <nav class="bg-white border-b border-slate-100 px-6 py-4 flex justify-between items-center sticky top-0 z-50">
+        <div class="flex items-center gap-2 text-indigo-600 font-extrabold text-2xl tracking-tighter">
+            <span class="bg-indigo-600 text-white px-2 py-1 rounded-lg">HI</span>
+            <span>TECH</span>
+            <span class="text-slate-400 text-sm font-bold ml-2 uppercase tracking-widest">TEACHER</span>
+        </div>
+        <div class="flex items-center gap-6">
+            <span id="user-email" class="text-slate-500 font-medium text-sm hidden md:block"></span>
+            <button onclick="window.logout()" class="text-red-500 font-bold text-sm hover:text-red-700 transition-colors">LOGOUT</button>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto p-6 space-y-8">
+        <!-- Announcements -->
+        <div class="bg-white p-8 rounded-[2.5rem] shadow-xl border border-slate-100">
+            <h2 class="text-2xl font-black text-slate-900 tracking-tighter mb-6 uppercase">ANNOUNCEMENTS</h2>
+            <div id="announcements-list" class="space-y-4">
+                <p class="text-slate-400 font-medium text-center py-10">Loading announcements...</p>
+            </div>
+        </div>
+
+        <!-- Materials -->
+        <div class="bg-white p-8 rounded-[2.5rem] shadow-xl border border-slate-100">
+            <h2 class="text-2xl font-black text-slate-900 tracking-tighter mb-6 uppercase">TEACHER MATERIALS</h2>
+            <div id="materials-list" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <p class="text-slate-400 font-medium text-center py-10 col-span-full">Loading materials...</p>
+            </div>
+        </div>
+    </main>
+
+    <script src="./js/supabase.js"></script>
+    <script src="./js/auth.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const authData = await window.checkAuth('teacher');
+            if (!authData) return;
+            document.getElementById('user-email').innerText = authData.user.email;
+
+            fetchContent();
+        });
+
+        async function fetchContent() {
+            const { data, error } = await window.supabase
+                .from('posts')
+                .select('*')
+                .or('audience.eq.teacher,audience.eq.all')
+                .order('created_at', { ascending: false });
+
+            if (error) {
+                alert(error.message);
+                return;
+            }
+
+            const announcements = data.filter(p => p.type === 'text');
+            const materials = data.filter(p => p.type !== 'text');
+
+            renderAnnouncements(announcements);
+            renderMaterials(materials);
+        }
+
+        function renderAnnouncements(items) {
+            const list = document.getElementById('announcements-list');
+            if (items.length === 0) {
+                list.innerHTML = `<p class="text-slate-400 font-medium text-center py-10">No announcements yet.</p>`;
+                return;
+            }
+            list.innerHTML = items.map(item => `
+                <div class="p-6 bg-indigo-50 rounded-2xl border border-indigo-100">
+                    <p class="font-black text-indigo-900 uppercase tracking-tighter mb-2">${item.title}</p>
+                    <p class="text-indigo-600 font-medium">${item.content || ''}</p>
+                    <p class="text-xs font-bold text-indigo-400 uppercase tracking-widest mt-4">${new Date(item.created_at).toLocaleDateString()}</p>
+                </div>
+            `).join('');
+        }
+
+        function renderMaterials(items) {
+            const list = document.getElementById('materials-list');
+            if (items.length === 0) {
+                list.innerHTML = `<p class="text-slate-400 font-medium text-center py-10 col-span-full">No materials available yet.</p>`;
+                return;
+            }
+            list.innerHTML = items.map(item => `
+                <div class="p-8 bg-slate-50 rounded-3xl border border-slate-100 text-center">
+                    <div class="text-4xl mb-4">${item.type === 'pdf' ? '📚' : item.type === 'video' ? '🎥' : '📄'}</div>
+                    <h3 class="text-xl font-black text-slate-900 uppercase tracking-tighter mb-4">${item.title}</h3>
+                    <a href="${item.file_url}" target="_blank" class="inline-block px-6 py-3 bg-indigo-600 text-white rounded-xl font-bold text-sm hover:bg-indigo-700 transition-all">VIEW MATERIAL</a>
+                </div>
+            `).join('');
+        }
+    </script>
+</body>
+</html>
