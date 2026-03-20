@@ -5,6 +5,7 @@ import fs from 'fs';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import cookieParser from 'cookie-parser';
+import cors from 'cors';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'hi-tech-academy-secret-key';
 const USERS_FILE = path.join(process.cwd(), 'users.json');
@@ -23,6 +24,7 @@ async function startServer() {
     const app = express();
     const PORT = 3000;
 
+    app.use(cors());
     app.use(express.json());
     app.use(cookieParser());
 
@@ -46,7 +48,7 @@ async function startServer() {
     };
 
     // Auth API
-    app.post('/api/auth/signup', async (req, res) => {
+    app.post(['/api/auth/signup', '/api/auth/signup/'], async (req, res) => {
         const { email, password, role } = req.body;
         const users = getUsers();
         if (users.find((u: any) => u.email === email)) return res.status(400).json({ message: 'User already exists' });
@@ -59,7 +61,7 @@ async function startServer() {
         res.json({ user: { id: newUser.id, email: newUser.email, role: newUser.role } });
     });
 
-    app.post('/api/auth/login', async (req, res) => {
+    app.post(['/api/auth/login', '/api/auth/login/'], async (req, res) => {
         const { email, password } = req.body;
         const users = getUsers();
         const user = users.find((u: any) => u.email === email);
