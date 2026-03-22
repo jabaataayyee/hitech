@@ -1,7 +1,8 @@
 // Auth Protection and Shared Logic
 async function checkAuth(requiredRole) {
     try {
-        const response = await fetch('/api/auth/me');
+        const apiUrl = window.API_URL ? window.API_URL('/api/auth/me') : '/api/auth/me';
+        const response = await fetch(apiUrl);
         if (!response.ok) {
             window.location.href = './login.html';
             return null;
@@ -30,7 +31,8 @@ async function checkAuth(requiredRole) {
 }
 
 async function logout() {
-    await fetch('/api/auth/logout', { method: 'POST' });
+    const apiUrl = window.API_URL ? window.API_URL('/api/auth/logout') : '/api/auth/logout';
+    await fetch(apiUrl, { method: 'POST' });
     window.location.href = './login.html';
 }
 

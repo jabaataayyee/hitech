@@ -51,6 +51,7 @@
         </div>
     </div>
 
+    <script src="./js/config.js"></script>
     <script>
         document.getElementById('signup-form').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -66,7 +67,8 @@
             errorMsg.classList.add('hidden');
 
             try {
-                const response = await fetch('/api/auth/signup', {
+                const apiUrl = window.API_URL ? window.API_URL('/api/auth/signup') : '/api/auth/signup';
+                const response = await fetch(apiUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email, password, role }),

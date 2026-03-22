@@ -85,6 +85,7 @@
         </div>
     </main>
 
+    <script src="./js/config.js"></script>
     <script src="./js/auth.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
@@ -98,7 +99,8 @@
 
         async function fetchPosts() {
             try {
-                const response = await fetch('/api/posts');
+                const apiUrl = window.API_URL ? window.API_URL('/api/posts') : '/api/posts';
+                const response = await fetch(apiUrl);
                 if (!response.ok) throw new Error('Failed to fetch posts');
                 
                 let data;
@@ -134,7 +136,8 @@
 
         async function fetchUsers() {
             try {
-                const response = await fetch('/api/users');
+                const apiUrl = window.API_URL ? window.API_URL('/api/users') : '/api/users';
+                const response = await fetch(apiUrl);
                 if (!response.ok) throw new Error('Failed to fetch users');
                 
                 let data;
@@ -162,7 +165,8 @@
         async function deletePost(id) {
             if (!confirm('Are you sure you want to delete this content?')) return;
             try {
-                const response = await fetch(`/api/posts/${id}`, { method: 'DELETE' });
+                const apiUrl = window.API_URL ? window.API_URL(`/api/posts/${id}`) : `/api/posts/${id}`;
+                const response = await fetch(apiUrl, { method: 'DELETE' });
                 if (!response.ok) throw new Error('Delete failed');
                 fetchPosts();
             } catch (err) {
@@ -185,7 +189,8 @@
             status.innerText = 'Processing...';
 
             try {
-                const response = await fetch('/api/posts', {
+                const apiUrl = window.API_URL ? window.API_URL('/api/posts') : '/api/posts';
+                const response = await fetch(apiUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ title, type, audience, file_url }),
