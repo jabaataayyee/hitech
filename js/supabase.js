@@ -1,12 +1,14 @@
-// Supabase Client Initialization
-// These values should be provided in the .env file or GitHub Secrets
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+// ✅ Supabase Client (GitHub Pages SAFE)
 
-// Initialize the Supabase client
-// Note: 'supabase' is available globally after importing the CDN script
-if (typeof supabase !== 'undefined' && supabaseUrl && supabaseAnonKey) {
-    window.supabaseClient = supabase.createClient(supabaseUrl, supabaseAnonKey);
+const SUPABASE_URL = "https://rbhadccqicswrgzzhpur.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_BShyIw6xu7s_uAuqGQp6ng_sqX_i9Nx";
+
+// Create global client
+window.supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// Debug check
+if (!window.supabaseClient) {
+    console.error("❌ Supabase failed to initialize");
 } else {
-    console.error("Supabase CDN or environment variables not loaded correctly");
+    console.log("✅ Supabase initialized");
 }
