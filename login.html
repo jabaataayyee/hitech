@@ -43,8 +43,10 @@
         </div>
     </div>
 
-    <script src="./js/config.js"></script>
-    <script>
+    <!-- Supabase CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="./js/supabase.js" type="module"></script>
+    <script type="module">
         document.getElementById('login-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const email = document.getElementById('email').value;
@@ -58,27 +60,18 @@
             errorMsg.classList.add('hidden');
 
             try {
-                const apiUrl = window.API_URL ? window.API_URL('/api/auth/login') : '/api/auth/login';
-                const response = await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, password }),
+                const { data, error } = await window.supabaseClient.auth.signInWithPassword({
+                    email,
+                    password,
                 });
 
-                let data;
-                const contentType = response.headers.get('content-type');
-                if (contentType && contentType.includes('application/json')) {
-                    data = await response.json();
-                } else {
-                    const text = await response.text();
-                    throw new Error(`Server returned non-JSON response: ${text.substring(0, 100)}...`);
-                }
+                if (error) throw error;
 
-                if (!response.ok) throw new Error(data.message || 'Login failed');
+                const role = data.user.user_metadata?.role || 'student';
 
                 successMsg.classList.remove('hidden');
                 setTimeout(() => {
-                    window.location.href = `./${data.user.role}.html`;
+                    window.location.href = `./${role}.html`;
                 }, 1000);
             } catch (err) {
                 errorMsg.innerText = err.message;

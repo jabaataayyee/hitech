@@ -1,38 +1,31 @@
 // Auth Protection and Shared Logic
 async function checkAuth(requiredRole) {
     try {
-        const apiUrl = window.API_URL ? window.API_URL('/api/auth/me') : '/api/auth/me';
-        const response = await fetch(apiUrl);
-        if (!response.ok) {
+        const { data: { session }, error } = await window.supabaseClient.auth.getSession();
+        
+        if (error || !session) {
             window.location.href = './login.html';
             return null;
         }
 
-        let data;
-        const contentType = response.headers.get('content-type');
-        if (contentType && contentType.includes('application/json')) {
-            data = await response.json();
-        } else {
-            throw new Error('Server returned non-JSON response');
-        }
+        const user = session.user;
+        const role = user.user_metadata?.role || 'student'; // Default to student if no role found
 
-        const user = data.user;
-
-        if (requiredRole && user.role !== requiredRole) {
-            window.location.href = `./${user.role}.html`;
+        if (requiredRole && role !== requiredRole) {
+            window.location.href = `./${role}.html`;
             return null;
         }
 
-        return { user, role: user.role };
+        return { user, role };
     } catch (err) {
+        console.error('Auth check error:', err);
         window.location.href = './login.html';
         return null;
     }
 }
 
 async function logout() {
-    const apiUrl = window.API_URL ? window.API_URL('/api/auth/logout') : '/api/auth/logout';
-    await fetch(apiUrl, { method: 'POST' });
+    await window.supabaseClient.auth.signOut();
     window.location.href = './login.html';
 }
 
