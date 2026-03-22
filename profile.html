@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hi Tech Academy - User Profile</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen">
+    <!-- Navigation -->
+    <nav class="bg-white border-b border-slate-100 px-6 py-4 flex justify-between items-center sticky top-0 z-50">
+        <div class="flex items-center gap-2 text-indigo-600 font-extrabold text-2xl tracking-tighter">
+            <a href="/" class="flex items-center gap-2">
+                <span class="bg-indigo-600 text-white px-2 py-1 rounded-lg">HI</span>
+                <span>TECH</span>
+            </a>
+            <span class="text-slate-400 text-sm font-bold ml-2 uppercase tracking-widest">PROFILE</span>
+        </div>
+        <div class="flex items-center gap-6">
+            <a id="dashboard-link" href="#" class="text-slate-600 font-bold text-sm hover:text-indigo-600 transition-colors uppercase tracking-widest">Dashboard</a>
+            <button onclick="window.logout()" class="text-red-500 font-bold text-sm hover:text-red-700 transition-colors uppercase tracking-widest">Logout</button>
+        </div>
+    </nav>
+
+    <main class="max-w-4xl mx-auto p-6 space-y-8">
+        <!-- Profile Header -->
+        <div class="bg-white p-10 rounded-[2.5rem] shadow-xl border border-slate-100 text-center relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-32 bg-indigo-600"></div>
+            <div class="relative z-10">
+                <div class="w-32 h-32 bg-white rounded-full mx-auto border-4 border-white shadow-lg flex items-center justify-center text-4xl mb-6 overflow-hidden">
+                    <span id="profile-avatar">👤</span>
+                </div>
+                <h2 id="profile-email" class="text-3xl font-black text-slate-900 tracking-tighter mb-2">Loading...</h2>
+                <div id="profile-role-badge" class="inline-flex items-center px-4 py-1 bg-indigo-50 text-indigo-600 rounded-full text-xs font-black uppercase tracking-widest">
+                    Role: ...
+                </div>
+            </div>
+        </div>
+
+        <!-- Activity Section -->
+        <div class="bg-white p-10 rounded-[2.5rem] shadow-xl border border-slate-100">
+            <h3 class="text-2xl font-black text-slate-900 tracking-tighter mb-8 uppercase">Recent Activity</h3>
+            <div id="activity-list" class="space-y-4">
+                <p class="text-slate-400 font-medium text-center py-10">Loading activity...</p>
+            </div>
+        </div>
+    </main>
+
+    <script src="./js/auth.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const authData = await window.checkAuth();
+            if (!authData) return;
+
+            const { user } = authData;
+            document.getElementById('profile-email').innerText = user.email;
+            document.getElementById('profile-role-badge').innerText = `Role: ${user.role}`;
+            document.getElementById('dashboard-link').href = `./${user.role}.html`;
+
+            // Set avatar based on role
+            const avatar = document.getElementById('profile-avatar');
+            if (user.role === 'admin') avatar.innerText = '🛡️';
+            else if (user.role === 'teacher') avatar.innerText = '👨‍🏫';
+            else avatar.innerText = '🎓';
+
+            fetchActivity(user);
+        });
+
+        async function fetchActivity(user) {
+            try {
+                // For now, we'll fetch posts and filter by user role or some logic
+                // In a real app, we might have a dedicated activity log
+                const response = await fetch('/api/posts');
+                if (!response.ok) throw new Error('Failed to fetch activity');
+                
+                let data;
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    data = await response.json();
+                } else {
+                    throw new Error('Server returned non-JSON response');
+                }
+
+                const list = document.getElementById('activity-list');
+                
+                // Simulate activity based on role
+                let activities = [];
+                if (user.role === 'admin' || user.role === 'teacher') {
+                    // Show posts they might have created (simulated since we don't store authorId yet)
+                    activities = data.slice(0, 5).map(post => ({
+                        type: 'post_created',
+                        title: `Created content: ${post.title}`,
+                        date: post.created_at || new Date().toISOString()
+                    }));
+                } else {
+                    // Show posts they can view
+                    activities = data.slice(0, 5).map(post => ({
+                        type: 'post_viewed',
+                        title: `Accessed content: ${post.title}`,
+                        date: post.created_at || new Date().toISOString()
+                    }));
+                }
+
+                if (activities.length === 0) {
+                    list.innerHTML = `<p class="text-slate-400 font-medium text-center py-10">No recent activity found.</p>`;
+                    return;
+                }
+
+                list.innerHTML = activities.map(act => `
+                    <div class="p-6 bg-slate-50 rounded-2xl border border-slate-100 flex justify-between items-center">
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center text-xl">
+                                ${act.type === 'post_created' ? '📝' : '📖'}
+                            </div>
+                            <div>
+                                <p class="font-bold text-slate-900">${act.title}</p>
+                                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">${new Date(act.date).toLocaleDateString()} • ${new Date(act.date).toLocaleTimeString()}</p>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (err) {
+                document.getElementById('activity-list').innerHTML = `<p class="text-red-500 font-bold text-center py-10">${err.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>

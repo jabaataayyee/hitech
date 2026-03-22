@@ -25,14 +25,15 @@ async function startServer() {
     const PORT = 3000;
 
     app.use(cors());
-    app.use(express.json());
-    app.use(cookieParser());
-
-    // Request logging
+    
+    // Request logging - move to very top
     app.use((req, res, next) => {
-        console.log(`${req.method} ${req.url}`);
+        console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
         next();
     });
+
+    app.use(express.json());
+    app.use(cookieParser());
 
     // Middleware to verify token
     const authenticate = (req: any, res: any, next: any) => {
@@ -47,48 +48,67 @@ async function startServer() {
         }
     };
 
-    // Auth API
-    app.post(['/api/auth/signup', '/api/auth/signup/'], async (req, res) => {
-        const { email, password, role } = req.body;
-        const users = getUsers();
-        if (users.find((u: any) => u.email === email)) return res.status(400).json({ message: 'User already exists' });
-        const hashedPassword = await bcrypt.hash(password, 10);
-        const newUser = { id: Date.now().toString(), email, password: hashedPassword, role };
-        users.push(newUser);
-        saveUsers(users);
-        const token = jwt.sign({ id: newUser.id, email: newUser.email, role: newUser.role }, JWT_SECRET, { expiresIn: '24h' });
-        res.cookie('token', token, { httpOnly: true, secure: true, sameSite: 'none' });
-        res.json({ user: { id: newUser.id, email: newUser.email, role: newUser.role } });
+    // Auth API Router
+    const authRouter = express.Router();
+
+    authRouter.post(['/signup', '/signup/'], async (req, res) => {
+        console.log('Signup attempt:', req.body.email);
+        try {
+            const { email, password, role } = req.body;
+            const users = getUsers();
+            if (users.find((u: any) => u.email === email)) return res.status(400).json({ message: 'User already exists' });
+            const hashedPassword = await bcrypt.hash(password, 10);
+            const newUser = { id: Date.now().toString(), email, password: hashedPassword, role };
+            users.push(newUser);
+            saveUsers(users);
+            const token = jwt.sign({ id: newUser.id, email: newUser.email, role: newUser.role }, JWT_SECRET, { expiresIn: '24h' });
+            res.cookie('token', token, { httpOnly: true, secure: true, sameSite: 'none' });
+            res.json({ user: { id: newUser.id, email: newUser.email, role: newUser.role } });
+        } catch (err: any) {
+            console.error('Signup error:', err);
+            res.status(500).json({ message: 'Signup failed', error: err.message });
+        }
     });
 
-    app.post(['/api/auth/login', '/api/auth/login/'], async (req, res) => {
-        const { email, password } = req.body;
-        const users = getUsers();
-        const user = users.find((u: any) => u.email === email);
-        if (!user || !(await bcrypt.compare(password, user.password))) return res.status(401).json({ message: 'Invalid credentials' });
-        const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: '24h' });
-        res.cookie('token', token, { httpOnly: true, secure: true, sameSite: 'none' });
-        res.json({ user: { id: user.id, email: user.email, role: user.role } });
+    authRouter.post(['/login', '/login/'], async (req, res) => {
+        console.log('Login attempt:', req.body.email);
+        try {
+            const { email, password } = req.body;
+            const users = getUsers();
+            const user = users.find((u: any) => u.email === email);
+            if (!user || !(await bcrypt.compare(password, user.password))) return res.status(401).json({ message: 'Invalid credentials' });
+            const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: '24h' });
+            res.cookie('token', token, { httpOnly: true, secure: true, sameSite: 'none' });
+            res.json({ user: { id: user.id, email: user.email, role: user.role } });
+        } catch (err: any) {
+            console.error('Login error:', err);
+            res.status(500).json({ message: 'Login failed', error: err.message });
+        }
     });
 
-    app.get('/api/auth/me', authenticate, (req: any, res) => {
+    authRouter.get('/me', authenticate, (req: any, res) => {
         res.json({ user: req.user });
     });
 
-    app.post('/api/auth/logout', (req, res) => {
+    authRouter.post(['/logout', '/logout/'], (req, res) => {
         res.clearCookie('token');
         res.json({ message: 'Logged out' });
     });
 
+    app.use('/api/auth', authRouter);
+
     // Posts API
-    app.get('/api/posts', authenticate, (req: any, res) => {
+    const postsRouter = express.Router();
+    postsRouter.use(authenticate);
+
+    postsRouter.get('/', (req: any, res) => {
         const posts = getPosts();
         if (req.user.role === 'admin') return res.json(posts);
         const filtered = posts.filter((p: any) => p.audience === 'all' || p.audience === req.user.role);
         res.json(filtered);
     });
 
-    app.post('/api/posts', authenticate, (req: any, res) => {
+    postsRouter.post('/', (req: any, res) => {
         if (req.user.role !== 'admin' && req.user.role !== 'teacher') return res.status(403).json({ message: 'Forbidden' });
         const { title, type, audience, file_url } = req.body;
         const posts = getPosts();
@@ -98,7 +118,7 @@ async function startServer() {
         res.json(newPost);
     });
 
-    app.delete('/api/posts/:id', authenticate, (req: any, res) => {
+    postsRouter.delete('/:id', (req: any, res) => {
         if (req.user.role !== 'admin') return res.status(403).json({ message: 'Forbidden' });
         const posts = getPosts();
         const filtered = posts.filter((p: any) => p.id !== req.params.id);
@@ -106,11 +126,19 @@ async function startServer() {
         res.json({ message: 'Deleted' });
     });
 
+    app.use('/api/posts', postsRouter);
+
     // Users API (Admin only)
     app.get('/api/users', authenticate, (req: any, res) => {
         if (req.user.role !== 'admin') return res.status(403).json({ message: 'Forbidden' });
         const users = getUsers().map(({ password, ...u }: any) => u);
         res.json(users);
+    });
+
+    // API 404 Handler - prevent falling through to Vite for non-existent API routes
+    app.use('/api/*all', (req, res) => {
+        console.log(`API 404: ${req.method} ${req.originalUrl}`);
+        res.status(404).json({ message: `API route ${req.method} ${req.originalUrl} not found` });
     });
 
     // Global Error Handler
@@ -132,7 +160,7 @@ async function startServer() {
     } else {
         const distPath = path.join(process.cwd(), 'dist');
         app.use(express.static(distPath));
-        app.get('*', (req, res) => {
+        app.get('*all', (req, res) => {
             res.sendFile(path.join(distPath, 'index.html'));
         });
     }
