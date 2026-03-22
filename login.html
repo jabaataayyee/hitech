@@ -49,6 +49,14 @@
     <script type="module">
         document.getElementById('login-form').addEventListener('submit', async (e) => {
             e.preventDefault();
+
+            // Safe fallback check
+            if (!window.supabaseClient || !window.supabaseClient.auth) {
+                console.error("Supabase not loaded correctly");
+                alert("The authentication service is currently unavailable. Please refresh the page.");
+                return;
+            }
+
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
             const submitBtn = document.getElementById('submit-btn');

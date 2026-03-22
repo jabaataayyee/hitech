@@ -88,7 +88,7 @@
     <!-- Supabase CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="./js/supabase.js" type="module"></script>
-    <script src="./js/auth.js"></script>
+    <script src="./js/auth.js" type="module"></script>
     <script type="module">
         document.addEventListener('DOMContentLoaded', async () => {
             const authData = await window.checkAuth('admin');
@@ -155,6 +155,11 @@
         }
 
         async function deletePost(id) {
+            if (!window.supabaseClient || !window.supabaseClient.auth) {
+                console.error("Supabase not loaded correctly");
+                alert("The authentication service is currently unavailable. Please refresh the page.");
+                return;
+            }
             if (!confirm('Are you sure you want to delete this content?')) return;
             try {
                 const { error } = await window.supabaseClient
@@ -171,6 +176,14 @@
 
         document.getElementById('upload-form').addEventListener('submit', async (e) => {
             e.preventDefault();
+
+            // Safe fallback check
+            if (!window.supabaseClient || !window.supabaseClient.auth) {
+                console.error("Supabase not loaded correctly");
+                alert("The authentication service is currently unavailable. Please refresh the page.");
+                return;
+            }
+
             const title = document.getElementById('title').value;
             const type = document.getElementById('type').value;
             const audience = document.getElementById('audience').value;

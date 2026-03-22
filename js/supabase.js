@@ -5,4 +5,8 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 // Initialize the Supabase client
 // Note: 'supabase' is available globally after importing the CDN script
-window.supabaseClient = supabase.createClient(supabaseUrl, supabaseAnonKey);
+if (typeof supabase !== 'undefined' && supabaseUrl && supabaseAnonKey) {
+    window.supabaseClient = supabase.createClient(supabaseUrl, supabaseAnonKey);
+} else {
+    console.error("Supabase CDN or environment variables not loaded correctly");
+}

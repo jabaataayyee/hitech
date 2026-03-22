@@ -1,5 +1,13 @@
 // Auth Protection and Shared Logic
 async function checkAuth(requiredRole) {
+    // Safe fallback check
+    if (!window.supabaseClient || !window.supabaseClient.auth) {
+        console.error("Supabase not loaded correctly");
+        // Try to wait a bit or redirect to login
+        window.location.href = './login.html';
+        return null;
+    }
+
     try {
         const { data: { session }, error } = await window.supabaseClient.auth.getSession();
         
@@ -25,6 +33,11 @@ async function checkAuth(requiredRole) {
 }
 
 async function logout() {
+    if (!window.supabaseClient || !window.supabaseClient.auth) {
+        console.error("Supabase not loaded correctly");
+        window.location.href = './login.html';
+        return;
+    }
     await window.supabaseClient.auth.signOut();
     window.location.href = './login.html';
 }
