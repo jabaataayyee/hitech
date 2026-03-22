@@ -8,19 +8,27 @@
     <!-- Tailwind -->
     <script src="https://cdn.tailwindcss.com"></script>
 
-    <!-- Supabase CDN (SAFE) -->
+    <!-- Supabase CDN (FIXED) -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap');
         body { font-family: 'Inter', sans-serif; }
+
+        .icon-3d {
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .icon-3d:hover {
+            transform: translateY(-10px) scale(1.05);
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.15);
+        }
     </style>
 </head>
 
 <body class="bg-slate-50 text-slate-900">
 
 <!-- NAV -->
-<nav class="p-4 flex justify-between bg-white shadow">
+<nav class="fixed top-0 w-full bg-white/80 backdrop-blur border-b p-4 flex justify-between z-50">
     <h1 class="font-bold text-xl text-indigo-600">HI TECH</h1>
     <div class="space-x-4">
         <a href="./login.html">Login</a>
@@ -29,45 +37,55 @@
 </nav>
 
 <!-- HERO -->
-<section class="p-10 text-center">
-    <h1 class="text-4xl font-bold mb-4">Welcome to Hi Tech Academy</h1>
-    <p class="text-gray-600">Modern learning platform</p>
+<section class="pt-24 text-center p-10">
+    <h1 class="text-5xl font-black mb-4">Welcome to Hi Tech Academy</h1>
+    <p class="text-gray-500 mb-8">Modern Digital Learning Platform</p>
 </section>
 
-<!-- 3D SECTION -->
-<div id="three-canvas" class="h-[400px]"></div>
+<!-- ICONS -->
+<section class="grid grid-cols-2 md:grid-cols-4 gap-6 p-10">
+    <div class="bg-white p-6 rounded-2xl text-center icon-3d shadow">
+        <div class="text-4xl mb-2">📚</div>
+        <p class="font-bold">Books</p>
+    </div>
+    <div class="bg-white p-6 rounded-2xl text-center icon-3d shadow">
+        <div class="text-4xl mb-2">🎥</div>
+        <p class="font-bold">Videos</p>
+    </div>
+    <div class="bg-white p-6 rounded-2xl text-center icon-3d shadow">
+        <div class="text-4xl mb-2">📝</div>
+        <p class="font-bold">Assignments</p>
+    </div>
+    <div class="bg-white p-6 rounded-2xl text-center icon-3d shadow">
+        <div class="text-4xl mb-2">📢</div>
+        <p class="font-bold">News</p>
+    </div>
+</section>
 
-<!-- Three.js -->
+<!-- 3D CANVAS -->
+<div id="three-canvas" class="h-[500px]"></div>
+
+<!-- THREE JS -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
-<!-- Supabase INIT (INLINE SAFE) -->
-<script>
-const SUPABASE_URL = "https://rbhadccqicswrgzzhpur.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_BShyIw6xu7s_uAuqGQp6ng_sqX_i9Nx";
-
-const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-if (!supabaseClient) {
-    console.error("❌ Supabase not initialized");
-} else {
-    console.log("✅ Supabase working");
-}
-</script>
-
-<!-- SIMPLE 3D -->
 <script>
 const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(75, window.innerWidth / 400, 0.1, 1000);
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / 500, 0.1, 1000);
 const renderer = new THREE.WebGLRenderer();
 
-renderer.setSize(window.innerWidth, 400);
+renderer.setSize(window.innerWidth, 500);
 document.getElementById('three-canvas').appendChild(renderer.domElement);
 
 const geometry = new THREE.BoxGeometry();
-const material = new THREE.MeshBasicMaterial({ color: 0x6366f1 });
+const material = new THREE.MeshStandardMaterial({ color: 0x6366f1 });
 const cube = new THREE.Mesh(geometry, material);
 
+const light = new THREE.PointLight(0xffffff, 1);
+light.position.set(5,5,5);
+
 scene.add(cube);
+scene.add(light);
+
 camera.position.z = 3;
 
 function animate() {
@@ -77,6 +95,20 @@ function animate() {
     renderer.render(scene, camera);
 }
 animate();
+</script>
+
+<!-- ✅ SUPABASE (FINAL FIX) -->
+<script>
+const SUPABASE_URL = "https://rbhadccqicswrgzzhpur.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_BShyIw6xu7s_uAuqGQp6ng_sqX_i9Nx";
+
+window.supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+if (!window.supabaseClient) {
+    console.error("❌ Supabase failed");
+} else {
+    console.log("✅ Supabase working");
+}
 </script>
 
 </body>
