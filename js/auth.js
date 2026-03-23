@@ -17,18 +17,45 @@ async function checkAuth(requiredRole) {
         }
 
         const user = session.user;
-        const role = user.user_metadata?.role || 'student'; // Default to student if no role found
+        
+        // Fetch role from users table
+        let role = 'student'; // Default
+        const { data: userData, error: userError } = await window.supabaseClient
+            .from('users')
+            .select('role')
+            .eq('email', user.email)
+            .single();
+            
+        if (!userError && userData) {
+            role = userData.role;
+        } else {
+            role = user.user_metadata?.role || 'student';
+        }
 
         if (requiredRole && role !== requiredRole) {
             window.location.href = `./${role}.html`;
             return null;
         }
 
+        setupProfileUI(user, role);
+
         return { user, role };
     } catch (err) {
         console.error('Auth check error:', err);
         window.location.href = './login.html';
         return null;
+    }
+}
+
+function setupProfileUI(user, role) {
+    const emailEl = document.getElementById('user-email');
+    const roleEl = document.getElementById('user-role');
+    const iconEl = document.getElementById('profile-icon');
+
+    if (emailEl) emailEl.innerText = user.email;
+    if (roleEl) roleEl.innerText = role;
+    if (iconEl && user.email) {
+        iconEl.innerText = user.email.charAt(0).toUpperCase();
     }
 }
 

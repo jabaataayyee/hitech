@@ -20,9 +20,20 @@
             </a>
             <span class="text-slate-400 text-sm font-bold ml-2 uppercase tracking-widest">PROFILE</span>
         </div>
-        <div class="flex items-center gap-6">
-            <a id="dashboard-link" href="#" class="text-slate-600 font-bold text-sm hover:text-indigo-600 transition-colors uppercase tracking-widest">Dashboard</a>
-            <button onclick="window.logout()" class="text-red-500 font-bold text-sm hover:text-red-700 transition-colors uppercase tracking-widest">Logout</button>
+        <div class="flex items-center gap-4 relative">
+            <a id="dashboard-link" href="#" class="text-slate-600 font-bold text-sm hover:text-indigo-600 transition-colors uppercase tracking-widest mr-4">Dashboard</a>
+            <div class="text-right hidden md:block">
+                <div id="user-email" class="text-slate-900 font-bold text-sm"></div>
+                <div id="user-role" class="text-slate-500 font-medium text-xs uppercase tracking-widest"></div>
+            </div>
+            <div class="relative group cursor-pointer">
+                <div id="profile-icon" class="w-10 h-10 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-lg uppercase"></div>
+                <div class="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-slate-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+                    <div class="p-2">
+                        <button onclick="window.logout()" class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg font-bold">Logout</button>
+                    </div>
+                </div>
+            </div>
         </div>
     </nav>
 
@@ -44,19 +55,20 @@
         <!-- Account Settings Section (Compact) -->
         <div class="max-w-md mx-auto bg-white/80 backdrop-blur-xl p-8 rounded-[2.5rem] shadow-[0_20px_50px_rgba(99,102,241,0.05)] border border-white/20">
             <h3 class="text-xl font-black text-slate-900 tracking-tighter mb-6 uppercase text-center">Account Settings</h3>
-            <div class="space-y-4">
+            <form id="update-profile-form" class="space-y-4">
                 <div>
                     <label class="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-widest ml-2">Email Address</label>
-                    <input type="email" readonly class="w-full px-5 py-3 bg-white border border-slate-200 rounded-xl outline-none font-medium text-sm text-slate-400 cursor-not-allowed" value="loading...">
+                    <input type="email" id="settings-email" readonly class="w-full px-5 py-3 bg-white border border-slate-200 rounded-xl outline-none font-medium text-sm text-slate-400 cursor-not-allowed" value="loading...">
                 </div>
                 <div>
                     <label class="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-widest ml-2">New Password</label>
-                    <input type="password" class="w-full px-5 py-3 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all font-medium text-sm" placeholder="••••••••">
+                    <input type="password" id="new-password" class="w-full px-5 py-3 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all font-medium text-sm" placeholder="••••••••">
                 </div>
-                <button class="w-full py-3 bg-slate-900 text-white rounded-xl font-black text-xs hover:bg-indigo-600 transition-all shadow-lg shadow-slate-200 uppercase tracking-widest">
+                <button type="submit" id="update-btn" class="w-full py-3 bg-slate-900 text-white rounded-xl font-black text-xs hover:bg-indigo-600 transition-all shadow-lg shadow-slate-200 uppercase tracking-widest">
                     Update Profile
                 </button>
-            </div>
+                <div id="update-status" class="text-center text-sm font-bold mt-2 hidden"></div>
+            </form>
         </div>
 
         <!-- Activity Section -->
@@ -79,6 +91,7 @@
 
             const { user, role } = authData;
             document.getElementById('profile-email').innerText = user.email;
+            document.getElementById('settings-email').value = user.email;
             document.getElementById('profile-role-badge').innerText = `Role: ${role}`;
             document.getElementById('dashboard-link').href = `./${role}.html`;
 
@@ -89,6 +102,48 @@
             else avatar.innerText = '🎓';
 
             fetchActivity(user, role);
+
+            // Handle password update
+            document.getElementById('update-profile-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const newPassword = document.getElementById('new-password').value;
+                const btn = document.getElementById('update-btn');
+                const status = document.getElementById('update-status');
+
+                if (!newPassword) {
+                    status.innerText = 'Please enter a new password.';
+                    status.classList.remove('hidden');
+                    status.classList.add('text-red-500');
+                    return;
+                }
+
+                btn.disabled = true;
+                btn.innerText = 'UPDATING...';
+                status.classList.remove('hidden', 'text-red-500', 'text-green-500');
+                status.innerText = 'Processing...';
+
+                try {
+                    const { error } = await window.supabaseClient.auth.updateUser({
+                        password: newPassword
+                    });
+
+                    if (error) throw error;
+
+                    status.innerText = 'Password updated successfully!';
+                    status.classList.add('text-green-500');
+                    document.getElementById('new-password').value = '';
+                } catch (err) {
+                    status.innerText = err.message;
+                    status.classList.add('text-red-500');
+                } finally {
+                    btn.disabled = false;
+                    btn.innerText = 'UPDATE PROFILE';
+                    setTimeout(() => {
+                        status.classList.add('hidden');
+                        status.classList.remove('text-green-500', 'text-red-500');
+                    }, 3000);
+                }
+            });
         });
 
         async function fetchActivity(user, role) {

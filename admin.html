@@ -18,10 +18,20 @@
             <span>TECH</span>
             <span class="text-slate-400 text-sm font-bold ml-2 uppercase tracking-widest">ADMIN</span>
         </div>
-        <div class="flex items-center gap-6">
-            <a href="./profile.html" class="text-slate-600 font-bold text-sm hover:text-indigo-600 transition-colors uppercase tracking-widest">Profile</a>
-            <span id="user-email" class="text-slate-500 font-medium text-sm hidden md:block"></span>
-            <button onclick="window.logout()" class="text-red-500 font-bold text-sm hover:text-red-700 transition-colors uppercase tracking-widest">LOGOUT</button>
+        <div class="flex items-center gap-4 relative">
+            <div class="text-right hidden md:block">
+                <div id="user-email" class="text-slate-900 font-bold text-sm"></div>
+                <div id="user-role" class="text-slate-500 font-medium text-xs uppercase tracking-widest"></div>
+            </div>
+            <div class="relative group cursor-pointer">
+                <div id="profile-icon" class="w-10 h-10 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-lg uppercase"></div>
+                <div class="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-slate-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+                    <div class="p-2">
+                        <a href="./profile.html" class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 rounded-lg font-medium">Profile</a>
+                        <button onclick="window.logout()" class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg font-bold">Logout</button>
+                    </div>
+                </div>
+            </div>
         </div>
     </nav>
 
@@ -54,8 +64,12 @@
                         </select>
                     </div>
                     <div id="file-input-container">
-                        <label class="block text-sm font-bold text-slate-700 mb-2 uppercase tracking-widest">File URL (Optional)</label>
-                        <input type="url" id="file_url" placeholder="https://example.com/file.pdf" class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all font-medium">
+                        <label class="block text-sm font-bold text-slate-700 mb-2 uppercase tracking-widest">File Upload</label>
+                        <input type="file" id="file_upload" class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all font-medium">
+                    </div>
+                    <div id="content-input-container" class="hidden">
+                        <label class="block text-sm font-bold text-slate-700 mb-2 uppercase tracking-widest">Content</label>
+                        <textarea id="content" rows="4" class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all font-medium" placeholder="Enter announcement content..."></textarea>
                     </div>
                     <button type="submit" id="upload-btn" class="w-full py-5 bg-indigo-600 text-white rounded-2xl font-black text-lg hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-100">
                         UPLOAD
@@ -119,6 +133,7 @@
                         <div>
                             <p class="font-black text-slate-900 uppercase tracking-tighter">${post.title}</p>
                             <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">${post.type} • For: ${post.audience}</p>
+                            ${post.type === 'text' ? `<p class="text-sm text-slate-600 mt-2 line-clamp-2">${post.content || ''}</p>` : ''}
                         </div>
                         <div class="flex gap-2">
                             ${post.file_url ? `<a href="${post.file_url}" target="_blank" class="text-indigo-600 font-bold text-xs hover:underline">VIEW</a>` : ''}
@@ -133,14 +148,18 @@
 
         async function fetchUsers() {
             try {
-                // In Supabase, we typically use a 'profiles' table for user listing
                 const { data, error } = await window.supabaseClient
-                    .from('profiles')
+                    .from('users')
                     .select('*');
 
                 if (error) throw error;
 
                 const list = document.getElementById('users-list');
+                if (data.length === 0) {
+                    list.innerHTML = `<p class="text-slate-400 font-medium text-center py-10">No users found.</p>`;
+                    return;
+                }
+
                 list.innerHTML = data.map(user => `
                     <div class="p-6 bg-slate-50 rounded-2xl border border-slate-100 flex justify-between items-center">
                         <div>
@@ -154,7 +173,7 @@
             }
         }
 
-        async function deletePost(id) {
+        window.deletePost = async function(id) {
             if (!window.supabaseClient || !window.supabaseClient.auth) {
                 console.error("Supabase not loaded correctly");
                 alert("The authentication service is currently unavailable. Please refresh the page.");
@@ -174,6 +193,26 @@
             }
         }
 
+        document.getElementById('type').addEventListener('change', (e) => {
+            const type = e.target.value;
+            const fileContainer = document.getElementById('file-input-container');
+            const contentContainer = document.getElementById('content-input-container');
+            const fileInput = document.getElementById('file_upload');
+            const contentInput = document.getElementById('content');
+
+            if (type === 'text') {
+                fileContainer.classList.add('hidden');
+                contentContainer.classList.remove('hidden');
+                fileInput.removeAttribute('required');
+                contentInput.setAttribute('required', 'true');
+            } else {
+                fileContainer.classList.remove('hidden');
+                contentContainer.classList.add('hidden');
+                fileInput.setAttribute('required', 'true');
+                contentInput.removeAttribute('required');
+            }
+        });
+
         document.getElementById('upload-form').addEventListener('submit', async (e) => {
             e.preventDefault();
 
@@ -187,7 +226,9 @@
             const title = document.getElementById('title').value;
             const type = document.getElementById('type').value;
             const audience = document.getElementById('audience').value;
-            const file_url = document.getElementById('file_url').value;
+            const content = document.getElementById('content').value;
+            const fileInput = document.getElementById('file_upload');
+            const file = fileInput.files[0];
             const btn = document.getElementById('upload-btn');
             const status = document.getElementById('upload-status');
 
@@ -197,9 +238,35 @@
             status.innerText = 'Processing...';
 
             try {
+                let file_url = null;
+                if (file && type !== 'text') {
+                    const fileExt = file.name.split('.').pop();
+                    const fileName = `${Math.random()}.${fileExt}`;
+                    const filePath = `${fileName}`;
+
+                    const { error: uploadError } = await window.supabaseClient.storage
+                        .from('files')
+                        .upload(filePath, file);
+
+                    if (uploadError) throw uploadError;
+
+                    const { data: { publicUrl } } = window.supabaseClient.storage
+                        .from('files')
+                        .getPublicUrl(filePath);
+                        
+                    file_url = publicUrl;
+                }
+
+                const postData = { title, type, audience };
+                if (type === 'text') {
+                    postData.content = content;
+                } else {
+                    postData.file_url = file_url;
+                }
+
                 const { error } = await window.supabaseClient
                     .from('posts')
-                    .insert([{ title, type, audience, file_url }]);
+                    .insert([postData]);
 
                 if (error) throw error;
 

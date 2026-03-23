@@ -18,10 +18,20 @@
             <span>TECH</span>
             <span class="text-slate-400 text-sm font-bold ml-2 uppercase tracking-widest">TEACHER</span>
         </div>
-        <div class="flex items-center gap-6">
-            <a href="./profile.html" class="text-slate-600 font-bold text-sm hover:text-indigo-600 transition-colors uppercase tracking-widest">Profile</a>
-            <span id="user-email" class="text-slate-500 font-medium text-sm hidden md:block"></span>
-            <button onclick="window.logout()" class="text-red-500 font-bold text-sm hover:text-red-700 transition-colors uppercase tracking-widest">LOGOUT</button>
+        <div class="flex items-center gap-4 relative">
+            <div class="text-right hidden md:block">
+                <div id="user-email" class="text-slate-900 font-bold text-sm"></div>
+                <div id="user-role" class="text-slate-500 font-medium text-xs uppercase tracking-widest"></div>
+            </div>
+            <div class="relative group cursor-pointer">
+                <div id="profile-icon" class="w-10 h-10 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-lg uppercase"></div>
+                <div class="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-slate-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+                    <div class="p-2">
+                        <a href="./profile.html" class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 rounded-lg font-medium">Profile</a>
+                        <button onclick="window.logout()" class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg font-bold">Logout</button>
+                    </div>
+                </div>
+            </div>
         </div>
     </nav>
 
@@ -65,6 +75,7 @@
                 const { data, error } = await window.supabaseClient
                     .from('posts')
                     .select('*')
+                    .or('audience.eq.teacher,audience.eq.all')
                     .order('created_at', { ascending: false });
 
                 if (error) throw error;
@@ -104,7 +115,7 @@
                 <div class="p-8 bg-slate-50 rounded-3xl border border-slate-100 text-center">
                     <div class="text-4xl mb-4">${item.type === 'pdf' ? '📚' : item.type === 'video' ? '🎥' : '📄'}</div>
                     <h3 class="text-xl font-black text-slate-900 uppercase tracking-tighter mb-4">${item.title}</h3>
-                    <a href="${item.file_url}" target="_blank" class="inline-block px-6 py-3 bg-indigo-600 text-white rounded-xl font-bold text-sm hover:bg-indigo-700 transition-all">VIEW MATERIAL</a>
+                    ${item.file_url ? `<a href="${item.file_url}" target="_blank" class="inline-block px-6 py-3 bg-indigo-600 text-white rounded-xl font-bold text-sm hover:bg-indigo-700 transition-all">VIEW MATERIAL</a>` : '<p class="text-sm text-slate-500">No file attached</p>'}
                 </div>
             `).join('');
         }
