@@ -268,7 +268,10 @@
                     .from('posts')
                     .insert([postData]);
 
-                if (error) throw error;
+                if (error) {
+                    alert(error.message);
+                    throw error;
+                }
 
                 status.innerText = 'Upload successful!';
                 status.classList.add('text-green-500');

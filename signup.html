@@ -85,7 +85,10 @@
                     }
                 });
 
-                if (error) throw error;
+                if (error) {
+                    alert(error.message);
+                    throw error;
+                }
 
                 successMsg.classList.remove('hidden');
                 setTimeout(() => {

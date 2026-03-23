@@ -127,7 +127,10 @@
                         password: newPassword
                     });
 
-                    if (error) throw error;
+                    if (error) {
+                        alert(error.message);
+                        throw error;
+                    }
 
                     status.innerText = 'Password updated successfully!';
                     status.classList.add('text-green-500');

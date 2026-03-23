@@ -76,7 +76,10 @@
                     password,
                 });
 
-                if (error) throw error;
+                if (error) {
+                    alert(error.message);
+                    throw error;
+                }
 
                 const role = data.user.user_metadata?.role || 'student';
 
